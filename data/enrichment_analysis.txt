@@ -1,0 +1,35 @@
+基因富集分析结果
+==================================================
+
+分析的基因总数: 10
+基因列表: BRCA1, BRCA2, AKT1, RB1, EGFR, PIK3CA, TP53, PTEN, MYC, KRAS
+
+功能分组:
+------------------------------
+DNA修复基因: BRCA1, BRCA2
+PI3K/AKT通路: AKT1
+肿瘤抑制基因: RB1, TP53, PTEN
+生长因子受体: EGFR
+PI3K通路: PIK3CA
+转录因子: MYC
+原癌基因: KRAS
+
+
+通路富集分析:
+------------------------------
+Cell_Cycle_Control:
+  富集基因: RB1, MYC, TP53
+  富集分数: 1.000
+
+DNA_Repair:
+  富集基因: BRCA2, BRCA1
+  富集分数: 1.000
+
+Growth_Factor_Signaling:
+  富集基因: EGFR, KRAS, PIK3CA, AKT1
+  富集分数: 1.000
+
+Tumor_Suppression:
+  富集基因: RB1, PTEN, TP53
+  富集分数: 1.000
+
