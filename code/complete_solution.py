@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-BED文件基因注释和富集分析 - 完整解决方案
+BED File Gene Annotation and Enrichment Analysis - Complete Solution
 """
 
 import pandas as pd
 from pathlib import Path
 from typing import List, Dict
 
-# 1. 基因位置数据库（示例）
+# 1. Gene Position Database (Example)
 GENE_POSITIONS = {
     'TP53': {'chromosome': 'chr17', 'start': 7661779, 'end': 7687550},
     'BRCA1': {'chromosome': 'chr17', 'start': 43044295, 'end': 43125483},
@@ -21,21 +21,21 @@ GENE_POSITIONS = {
     'PTEN': {'chromosome': 'chr10', 'start': 87863113, 'end': 87971930}
 }
 
-# 2. 基因功能分类
+# 2. Gene Function Classification
 GENE_FUNCTIONS = {
-    'TP53': '肿瘤抑制基因',
-    'BRCA1': 'DNA修复基因',
-    'BRCA2': 'DNA修复基因',
-    'EGFR': '生长因子受体',
-    'KRAS': '原癌基因',
-    'PIK3CA': 'PI3K通路',
-    'AKT1': 'PI3K/AKT通路',
-    'MYC': '转录因子',
-    'RB1': '肿瘤抑制基因',
-    'PTEN': '肿瘤抑制基因'
+    'TP53': 'Tumor Suppressor Gene',
+    'BRCA1': 'DNA Repair Gene',
+    'BRCA2': 'DNA Repair Gene',
+    'EGFR': 'Growth Factor Receptor',
+    'KRAS': 'Oncogene',
+    'PIK3CA': 'PI3K Pathway',
+    'AKT1': 'PI3K/AKT Pathway',
+    'MYC': 'Transcription Factor',
+    'RB1': 'Tumor Suppressor Gene',
+    'PTEN': 'Tumor Suppressor Gene'
 }
 
-# 3. 癌症相关通路
+# 3. Cancer-Related Pathways
 CANCER_PATHWAYS = {
     'Cell_Cycle_Control': ['TP53', 'RB1', 'MYC'],
     'DNA_Repair': ['BRCA1', 'BRCA2'],
@@ -44,14 +44,14 @@ CANCER_PATHWAYS = {
 }
 
 class GeneAnnotator:
-    """基因注释器"""
+    """Gene Annotator"""
     
     def __init__(self, gene_positions: Dict = None):
         self.gene_positions = gene_positions or GENE_POSITIONS
-        print(f"初始化基因注释器，加载 {len(self.gene_positions)} 个基因位置")
+        print(f"Initialize gene annotator, load {len(self.gene_positions)} genes loaded")
     
     def parse_bed_file(self, bed_content: str) -> pd.DataFrame:
-        """解析BED文件内容"""
+        """Parse BED file content"""
         lines = [line.strip() for line in bed_content.strip().split('\n') if line.strip()]
         data = []
         
@@ -65,11 +65,11 @@ class GeneAnnotator:
                 })
         
         bed_df = pd.DataFrame(data)
-        print(f"解析BED文件，共 {len(bed_df)} 个基因组区域")
+        print(f"Parse BED file, total {len(bed_df)} genomic regions")
         return bed_df
     
     def find_overlapping_genes(self, chromosome: str, start: int, end: int) -> List[str]:
-        """查找与指定区域重叠的基因"""
+        """Find genes overlapping with specified region"""
         overlapping_genes = []
         
         for gene_name, gene_info in self.gene_positions.items():
@@ -81,16 +81,16 @@ class GeneAnnotator:
         return overlapping_genes
     
     def annotate_regions(self, bed_df: pd.DataFrame) -> pd.DataFrame:
-        """注释基因组区域"""
+        """Annotate genomic regions"""
         genes_list = []
         
-        print("开始基因注释...")
+        print("Start gene annotation...")
         for idx, row in bed_df.iterrows():
             chromosome = str(row['chromosome'])
             start = int(row['start'])
             end = int(row['end'])
             
-            # 查找重叠基因
+            # Find overlapping genes
             overlapping_genes = self.find_overlapping_genes(chromosome, start, end)
             
             if overlapping_genes:
@@ -104,14 +104,14 @@ class GeneAnnotator:
         return bed_df
 
 class EnrichmentAnalyzer:
-    """富集分析器"""
+    """Enrichment Analyzer"""
     
     def __init__(self, gene_functions: Dict = None, pathways: Dict = None):
         self.gene_functions = gene_functions or GENE_FUNCTIONS
         self.pathways = pathways or CANCER_PATHWAYS
     
     def extract_gene_list(self, bed_df: pd.DataFrame) -> List[str]:
-        """从注释结果中提取基因列表"""
+        """Extract gene list from annotation results"""
         all_genes = []
         for genes_str in bed_df['genes']:
             if genes_str != 'Unknown':
@@ -119,12 +119,12 @@ class EnrichmentAnalyzer:
                 all_genes.extend(genes)
         
         unique_genes = list(set(all_genes))
-        print(f"提取到 {len(unique_genes)} 个唯一基因: {unique_genes}")
+        print(f"Extracted {len(unique_genes)} unique genes: {unique_genes}")
         return unique_genes
     
     def functional_enrichment(self, gene_list: List[str]) -> Dict:
-        """功能富集分析"""
-        print("执行功能富集分析...")
+        """Functional enrichment analysis"""
+        print("Perform functional enrichment analysis...")
         
         functional_groups = {}
         for gene in gene_list:
@@ -141,8 +141,8 @@ class EnrichmentAnalyzer:
         }
     
     def pathway_enrichment(self, gene_list: List[str]) -> Dict:
-        """通路富集分析"""
-        print("执行通路富集分析...")
+        """Pathway enrichment analysis"""
+        print("Perform pathway enrichment analysis...")
         
         pathway_results = {}
         for pathway, pathway_genes in self.pathways.items():
@@ -158,45 +158,45 @@ class EnrichmentAnalyzer:
     
     def save_results(self, bed_df: pd.DataFrame, functional_results: Dict, 
                     pathway_results: Dict, output_dir: str):
-        """保存分析结果"""
+        """Save analysis results"""
         Path(output_dir).mkdir(exist_ok=True)
         
-        # 保存注释结果
+        # Save annotation results
         output_file = f"{output_dir}/annotated_genes.bed"
         bed_df.to_csv(output_file, sep='\t', index=False)
-        print(f"注释结果已保存到: {output_file}")
+        print(f"Annotation results saved to: {output_file}")
         
-        # 生成详细报告
+        # Generate detailed report
         report_file = f"{output_dir}/enrichment_analysis_report.txt"
         with open(report_file, 'w', encoding='utf-8') as f:
-            f.write("基因富集分析详细报告\n")
+            f.write("Gene Enrichment Analysis Detailed Report\n")
             f.write("=" * 60 + "\n\n")
             
             # 基本信息
-            f.write("1. 分析概述\n")
+            f.write("1. Analysis Overview\n")
             f.write("-" * 30 + "\n")
-            f.write(f"基因组区域数量: {len(bed_df)}\n")
-            f.write(f"识别基因数量: {functional_results['total_genes']}\n")
+            f.write(f"Number of genomic regions: {len(bed_df)}\n")
+            f.write(f"Number of identified genes: {functional_results['total_genes']}\n")
             f.write(f"基因列表: {', '.join(functional_results['genes'])}\n\n")
             
             # 功能分组
-            f.write("2. 功能富集分析\n")
+            f.write("2. Functional Enrichment Analysis\n")
             f.write("-" * 30 + "\n")
             for function, genes in functional_results['functional_groups'].items():
                 f.write(f"{function}:\n")
-                f.write(f"  基因数量: {len(genes)}\n")
-                f.write(f"  基因列表: {', '.join(genes)}\n\n")
+                f.write(f"  Number of genes: {len(genes)}\n")
+                f.write(f"  Gene list: {', '.join(genes)}\n\n")
             
             # 通路富集
-            f.write("3. 通路富集分析\n")
+            f.write("3. Pathway Enrichment Analysis\n")
             f.write("-" * 30 + "\n")
             for pathway, info in pathway_results.items():
                 f.write(f"{pathway}:\n")
-                f.write(f"  富集基因: {', '.join(info['genes'])}\n")
+                f.write(f"  Enriched genes: {', '.join(info['genes'])}\n")
                 f.write(f"  富集分数: {info['enrichment_score']:.3f}\n")
                 f.write(f"  显著性: {info['p_value']:.3f}\n\n")
         
-        print(f"详细报告已保存到: {report_file}")
+        print(f"Detailed report saved to: {report_file}")
         
         return {
             'annotated_file': output_file,
@@ -206,7 +206,7 @@ class EnrichmentAnalyzer:
 # 演示函数
 def run_demo():
     """运行演示"""
-    print("=== BED文件基因注释和富集分析演示 ===\n")
+    print("=== BED File Gene Annotation and Enrichment Analysis Demo ===\n")
     
     # 您的BED文件内容
     bed_content = """chr17\t7661779\t7687550
@@ -228,48 +228,48 @@ chr13\t48877837\t49056148"""
     annotator = GeneAnnotator()
     analyzer = EnrichmentAnalyzer()
     
-    # 1. 解析BED文件
-    print("1. 解析BED文件")
+    # 1. Parse BED file
+    print("1. Parse BED file")
     bed_df = annotator.parse_bed_file(bed_content)
     print(bed_df)
     print()
     
-    # 2. 基因注释
-    print("2. 基因注释")
+    # 2. Gene annotation
+    print("2. Gene annotation")
     annotated_df = annotator.annotate_regions(bed_df)
     print()
     
-    # 3. 提取基因列表
-    print("3. 提取基因列表")
+    # 3. Extract gene list
+    print("3. Extract gene list")
     gene_list = analyzer.extract_gene_list(annotated_df)
     print()
     
-    # 4. 富集分析
-    print("4. 富集分析")
+    # 4. Enrichment analysis
+    print("4. Enrichment analysis")
     functional_results = analyzer.functional_enrichment(gene_list)
     pathway_results = analyzer.pathway_enrichment(gene_list)
     print()
     
-    # 5. 保存结果
-    print("5. 保存结果")
+    # 5. Save results
+    print("5. Save results")
     result_files = analyzer.save_results(annotated_df, functional_results, 
                                        pathway_results, output_dir)
     print()
     
-    # 显示结果摘要
-    print("=== 分析结果摘要 ===")
-    print(f"• 基因组区域: {len(annotated_df)} 个")
-    print(f"• 识别基因: {len(gene_list)} 个")
-    print(f"• 功能分组: {len(functional_results['functional_groups'])} 个")
-    print(f"• 富集通路: {len(pathway_results)} 个")
+    # Display result summary
+    print("=== Analysis Result Summary ===")
+    print(f"• Genomic regions: {len(annotated_df)} regions")
+    print(f"• Identified genes: {len(gene_list)} genes")
+    print(f"• Functional groups: {len(functional_results['functional_groups'])} groups")
+    print(f"• Enriched pathways: {len(pathway_results)} pathways")
     
-    print("\n功能分组详情:")
+    print("\nFunctional Group Details:")
     for function, genes in functional_results['functional_groups'].items():
         print(f"  {function}: {', '.join(genes)}")
     
-    print("\n通路富集详情:")
+    print("\nPathway Enrichment Details:")
     for pathway, info in pathway_results.items():
-        print(f"  {pathway}: {', '.join(info['genes'])} (分数: {info['enrichment_score']:.3f})")
+        print(f"  {pathway}: {', '.join(info['genes'])} (score: {info['enrichment_score']:.3f})")
     
     return annotated_df, functional_results, pathway_results
 
