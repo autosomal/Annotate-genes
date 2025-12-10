@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-BED文件基因注释和富集分析工具
-将BED格式的基因组位置信息注释到基因名，并进行功能富集分析
+BED File Gene Annotation and Enrichment Analysis Tool
+Annotate genomic position information in BED format to gene names and perform functional enrichment analysis
 """
 
 import pandas as pd
@@ -13,29 +13,29 @@ import time
 from pathlib import Path
 
 class GeneAnnotator:
-    """基因组位置注释器"""
+    """Genomic Position Annotator"""
     
     def __init__(self):
         self.gencode_url = "https://rest.genenames.org/fetch/region/"
         self.header = {"Content-Type": "application/json"}
         
     def parse_bed_file(self, bed_file: str) -> pd.DataFrame:
-        """解析BED文件"""
+        """Parse BED file"""
         try:
-            # 读取BED文件，假设没有header
+            # Read BED file, assuming no header
             bed_df = pd.read_csv(bed_file, sep='\t', header=None, 
                                names=['chromosome', 'start', 'end'])
-            print(f"成功读取BED文件，共{len(bed_df)}个区域")
+            print(f"Successfully read BED file, {len(bed_df)} regions in total")
             return bed_df
         except Exception as e:
-            print(f"读取BED文件失败: {e}")
+            print(f"Failed to read BED file: {e}")
             return None
     
     def annotate_with_gencode_api(self, chromosome: str, start: int, end: int) -> List[str]:
-        """使用GENCODE API注释基因"""
+        """Annotate genes using GENCODE API"""
         genes = []
         try:
-            # 构建GENCODE API请求
+            # Build GENCODE API request
             region = f"{chromosome}:{start}:{end}"
             url = f"{self.gencode_url}{region}"
             
@@ -46,61 +46,61 @@ class GeneAnnotator:
                 for doc in docs:
                     if 'symbol' in doc:
                         genes.append(doc['symbol'])
-            time.sleep(0.1)  # 避免请求过快
+            time.sleep(0.1)  # Avoid requests being too fast
         except Exception as e:
-            print(f"API请求失败 {chromosome}:{start}-{end}: {e}")
+            print(f"API request failed {chromosome}:{start}-{end}: {e}")
         
         return genes
     
     def annotate_bed_regions(self, bed_df: pd.DataFrame) -> pd.DataFrame:
-        """注释BED区域到基因"""
+        """Annotate BED regions to genes"""
         genes_list = []
         
-        print("开始注释基因...")
+        print("Starting gene annotation...")
         for idx, row in bed_df.iterrows():
             chromosome = f"chr{row['chromosome']}" if not str(row['chromosome']).startswith('chr') else str(row['chromosome'])
             genes = self.annotate_with_gencode_api(chromosome, row['start'], row['end'])
             genes_list.append(';'.join(genes) if genes else 'Unknown')
             
             if (idx + 1) % 10 == 0:
-                print(f"已处理 {idx + 1}/{len(bed_df)} 个区域")
+                print(f"Processed {idx + 1}/{len(bed_df)} regions")
         
         bed_df['genes'] = genes_list
         return bed_df
     
     def save_annotated_results(self, bed_df: pd.DataFrame, output_file: str):
-        """保存注释结果"""
+        """Save annotation results"""
         bed_df.to_csv(output_file, sep='\t', index=False)
-        print(f"注释结果已保存到: {output_file}")
+        print(f"Annotation results saved to: {output_file}")
 
 class GeneEnrichmentAnalyzer:
-    """基因富集分析器"""
+    """Gene Enrichment Analyzer"""
     
     def __init__(self):
         self.go_api = "https://api.geneontology.org/api/bioentity/function/"
         self.kegg_api = "https://rest.kegg.jp/link/pathway/hsa/"
         
     def get_gene_list_from_bed(self, bed_df: pd.DataFrame) -> List[str]:
-        """从注释后的BED文件中提取基因列表"""
+        """Extract gene list from annotated BED file"""
         all_genes = []
         for genes_str in bed_df['genes']:
             if genes_str != 'Unknown':
                 genes = genes_str.split(';')
                 all_genes.extend(genes)
         
-        # 去重
+        # Remove duplicates
         unique_genes = list(set(all_genes))
-        print(f"提取到 {len(unique_genes)} 个唯一基因")
+        print(f"Extracted {len(unique_genes)} unique genes")
         return unique_genes
     
     def perform_go_enrichment(self, genes: List[str]) -> Dict:
-        """执行GO功能富集分析"""
+        """Perform GO functional enrichment analysis"""
         enrichment_results = {}
         
-        print("执行GO功能富集分析...")
+        print("Performing GO functional enrichment analysis...")
         for gene in genes:
             try:
-                # 获取基因的GO注释
+                # Get GO annotations for the gene
                 url = f"{self.go_api}{gene}"
                 response = requests.get(url)
                 if response.status_code == 200:
@@ -108,18 +108,18 @@ class GeneEnrichmentAnalyzer:
                     enrichment_results[gene] = data
                 time.sleep(0.1)
             except Exception as e:
-                print(f"GO富集分析失败 {gene}: {e}")
+                print(f"GO enrichment analysis failed for {gene}: {e}")
         
         return enrichment_results
     
     def perform_kegg_enrichment(self, genes: List[str]) -> Dict:
-        """执行KEGG通路富集分析"""
+        """Perform KEGG pathway enrichment analysis"""
         kegg_results = {}
         
-        print("执行KEGG通路富集分析...")
+        print("Performing KEGG pathway enrichment analysis...")
         for gene in genes:
             try:
-                # 获取基因的KEGG通路注释
+                # Get KEGG pathway annotations for the gene
                 url = f"https://rest.kegg.jp/link/pathway/hsa:{gene}"
                 response = requests.get(url)
                 if response.status_code == 200:
@@ -127,15 +127,15 @@ class GeneEnrichmentAnalyzer:
                     kegg_results[gene] = [p.split('\t')[1] for p in pathways if p]
                 time.sleep(0.1)
             except Exception as e:
-                print(f"KEGG富集分析失败 {gene}: {e}")
+                print(f"KEGG enrichment analysis failed for {gene}: {e}")
         
         return kegg_results
     
     def save_enrichment_results(self, go_results: Dict, kegg_results: Dict, output_dir: str):
-        """保存富集分析结果"""
+        """Save enrichment analysis results"""
         Path(output_dir).mkdir(exist_ok=True)
         
-        # 保存GO结果
+        # Save GO results
         if go_results:
             go_df = pd.DataFrame([
                 {
@@ -145,7 +145,7 @@ class GeneEnrichmentAnalyzer:
                 for gene, data in go_results.items()
             ])
             go_df.to_csv(f"{output_dir}/go_enrichment_results.csv", index=False)
-            print(f"GO富集分析结果已保存到: {output_dir}/go_enrichment_results.csv")
+            print(f"GO enrichment analysis results saved to: {output_dir}/go_enrichment_results.csv")
         
         # 保存KEGG结果
         if kegg_results:
